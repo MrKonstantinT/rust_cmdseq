@@ -15,7 +15,8 @@ fn string_collector(string: &str, start_white: usize, end_white: usize) -> Strin
 fn build_command(arguments: std::iter::Skip<std::env::Args>) -> String {
     let mut command = String::new();
     for argument in arguments {
-        command = command + &argument + &" ".to_string();
+        command = if argument.contains(' ') { command + &"\"".to_string() + &argument + &"\" ".to_string() }
+        else { command + &argument + &" ".to_string() };
     }
     String::from(command.trim_right())
 }
