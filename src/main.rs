@@ -1,4 +1,4 @@
-fn string_collector(string: &str, start_white: usize, end_white: usize) -> String {
+fn collect_between_white(string: &str, start_white: usize, end_white: usize) -> String {
     let mut collecting = false;
     let mut ignoring_white = false;
     let mut count_white = 0;
@@ -42,8 +42,8 @@ fn main() {
     let mut user_command = build_command(passed_arguments);
     println!("Built string: {}", user_command);
     if user_command.starts_with("-d ") {
-        load_cookie(&string_collector(&user_command, 1, 2));
-        user_command = string_collector(&user_command, 2, 0);
+        load_cookie(&collect_between_white(&user_command, 1, 2));
+        user_command = collect_between_white(&user_command, 2, 0);
     } else { load_cookie("/tmp"); }
     println!("Finished with: {}", user_command);
 }
