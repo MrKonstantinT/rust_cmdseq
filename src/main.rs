@@ -1,13 +1,18 @@
 fn string_collector(string: &str, start_white: usize, end_white: usize) -> String {
-    let mut collect = false;
+    let mut collecting = false;
+    let mut ignoring_white = false;
     let mut count_white = 0;
     let mut collection = String::new();
     for c in string.chars() {
-        if c == ' ' {
+        if c == '"' {
+            ignoring_white = !ignoring_white;
+            if collecting { collection.push(c); } // Quotes are kept when we are collecting
+        } else if !ignoring_white && c == ' ' {
             count_white = count_white + 1;
-            if !collect && (count_white == start_white || (count_white == 0 && start_white == 0)) { collect = !collect; }
+            if !collecting && (count_white == start_white || (count_white == 0 && start_white == 0)) { collecting = !collecting; }
             else if count_white == end_white { return collection; }
-        } else if collect { collection.push(c); }
+            else { collection.push(c); } // Don't skip spaces between start and end whites.
+        } else if collecting { collection.push(c); }
     }
     return collection;
 }
