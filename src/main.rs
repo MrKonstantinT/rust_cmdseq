@@ -1,3 +1,6 @@
+use std::process::Command;
+use std::io::prelude::*;
+
 struct CmdSeq {
     times_before_next: usize,
     cmd: String,
@@ -41,8 +44,15 @@ fn build_command(arguments: std::iter::Skip<std::env::Args>) -> String {
     String::from(command.trim_right())
 }
 
-fn load_cookie(directory: &str) { // Will return file handle in future.
-    println!("File path: {}", directory);
+fn load_cookie(directory: &str, to_hash: &str) { // Will return file handle in future.
+    // Select hash program here in the future.
+    use std::process::Stdio;
+    let hash_program = Command::new("sha256sum").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Failed to spawn sha256sum");
+    hash_program.stdin.unwrap().write_all(to_hash.as_bytes()).expect("Failed to input into sha256sum");
+    let mut hash_raw = String::new();
+    hash_program.stdout.unwrap().read_to_string(&mut hash_raw).expect("Failed to read output from sha256sum");
+    let hash_extention: String = hash_raw.chars().take(16).collect();
+    println!("File path: {}/cookie.{}", directory, hash_extention);
 }
 
 fn get_command_list(command: &str) -> Vec<CmdSeq>{
@@ -67,9 +77,10 @@ fn main() {
     }
     let mut user_command = build_command(passed_arguments);
     if user_command.starts_with("-d ") {
-        load_cookie(&collect_between_white(&user_command, 1, 2));
+        let directory = &collect_between_white(&user_command, 1, 2);
         user_command = collect_between_white(&user_command, 2, 0); // Strip the this '-d' flag.
-    } else { load_cookie("/tmp"); }
+        load_cookie(&directory, &user_command);
+    } else { load_cookie("/tmp", &user_command); }
     for cmdseq in get_command_list(&user_command) {
         println!("CmdSeq\n  times_before_next: {}\n  cmd: {}", cmdseq.times_before_next, cmdseq.cmd);
     }
