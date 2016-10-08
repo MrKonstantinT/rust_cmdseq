@@ -45,7 +45,7 @@ fn build_command(arguments: std::iter::Skip<std::env::Args>) -> String {
     String::from(command.trim_right())
 }
 
-fn load_cookie(directory: &str, to_hash: &str) -> std::fs::File { // Will return file handle in future.
+fn load_cookie(directory: &str, to_hash: &str) -> std::fs::File {
     // Select hash program here in the future.
     use std::process::Stdio;
     let hash_program = Command::new("sha256sum").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Failed to spawn sha256sum");
@@ -66,7 +66,7 @@ fn load_cookie(directory: &str, to_hash: &str) -> std::fs::File { // Will return
     println!("Read from cookie: {}.", file_data);
     if file_data == "" {
         file.write(b"0\n").expect("Failed to initialse file data."); //
-        file.flush().expect("Failed to flush to disk.");
+        file.seek(std::io::SeekFrom::End(-2)).expect("Failed to make the file object read from the beginning.");
     }
     file
 }
