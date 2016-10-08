@@ -65,7 +65,7 @@ fn load_cookie(directory: &str, to_hash: &str) -> std::fs::File { // Will return
     file.read_to_string(&mut file_data).expect("Failed to read from our cookie.");
     println!("Read from cookie: {}.", file_data);
     if file_data == "" {
-        file.write(b"0").expect("Failed to initialse file data."); //
+        file.write(b"0\n").expect("Failed to initialse file data."); //
         file.flush().expect("Failed to flush to disk.");
     }
     file
