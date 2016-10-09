@@ -53,7 +53,6 @@ fn load_cookie(directory: &str, to_hash: &str) -> std::fs::File {
     let mut hash_raw = String::new();
     hash_program.stdout.unwrap().read_to_string(&mut hash_raw).expect("Failed to read output from sha256sum");
     let hash_extention: String = hash_raw.chars().take(16).collect();
-    println!("File path: {}/cookie.{}", directory, hash_extention);
     std::fs::create_dir_all(directory).expect("Failed to create directory(ies)");
     let mut file_path = String::new();
     file_path = file_path + directory + "/cookie." + &hash_extention;
@@ -72,18 +71,19 @@ fn load_cookie(directory: &str, to_hash: &str) -> std::fs::File {
 
 fn get_command_list(command: &str) -> (Vec<CmdSeq>, usize) {
     let mut command_list: Vec<CmdSeq> = Vec::new();
-    let mut number_of_operations_before_wrap: usize = 0;
+    // The number of operations we would execute before we need to start from beginning.
+    let mut num_operations: usize = 0;
     let mut num = 0;
     while num <= count_white_space(command) { // Using 'while' loop as 'step_by()' has issues atm.
         let t_b_n: usize = collect_between_white(command, num, num + 1).parse().expect("Usage: cmdseq [-d <count dir>] <count1> <cmd1> [... <countn> <cmdn>]");
-        number_of_operations_before_wrap += t_b_n;
+        num_operations += t_b_n;
         command_list.push(CmdSeq {
             times_before_next: t_b_n,
             cmd: collect_between_white(command, num + 1, num + 2).replace("\"", ""),
         });
         num = num + 2;
     }
-    (command_list, number_of_operations_before_wrap)
+    (command_list, num_operations)
 }
 
 fn main() {
@@ -100,33 +100,27 @@ fn main() {
         directory = collect_between_white(&user_command, 1, 2);
         user_command = collect_between_white(&user_command, 2, 0); // Strip the this '-d' flag.
     }
+    println!("{}", &user_command); // Show the user what the program will actually work with.
     let file = &mut load_cookie(&directory, &user_command);
     file.read_to_string(&mut file_data).expect("Failed to read from our cookie.");
-    println!("Read from cookie: {}.", file_data);
     file.seek(std::io::SeekFrom::End(-1 * file_data.len() as i64)).expect("Failed to make the file object read from the beginning.");
     let index: usize = file_data.trim_right().parse().expect("Something went wrong with parsing the cookie contents.");
-    println!("Index: {}.", index);
     let (cmd_list, number_of_operations) = get_command_list(&user_command);
-    println!("Number of Operations: {}.", number_of_operations);
-    if index + 1 > number_of_operations {
+    if index + 1 >= number_of_operations { // Perform 'wrap round':
         file.set_len(0).expect("Failed to shirnk file to size 0.");
         file.write(b"0\n").expect("Failed to update cookie.");
-        println!("Wrote \"0\" to cookie.");
     } else {
         let next_index = index + 1;
         let string = next_index.to_string() + "\n";
         file.write(string.as_bytes()).expect("Failed to update cookie.");
-        println!("Wrote \"{}\" to cookie.", next_index);
     };
     let mut accumulator: usize = 0;
     for cmdseq in cmd_list {
         accumulator += cmdseq.times_before_next;
-        println!("CmdSeq: {}, {}. Accumulator: {}.", cmdseq.times_before_next, cmdseq.cmd, accumulator);
-        if index <= accumulator {
-            println!("Trying to execute command.");
+        if index < accumulator {
             let mut word_iter = cmdseq.cmd.split_whitespace();
             let mut program = Command::new(match word_iter.next() {
-                Some(string) => { println!("Program: {}.", string); string },
+                Some(string) => string,
                 None => {
                     println!("Usage: cmdseq [-d <count dir>] <count1> <cmd1> [... <countn> <cmdn>]");
                     return; // terminate program.
@@ -135,7 +129,7 @@ fn main() {
             for argument in word_iter {
                 program.arg(argument);
             }
-            program.output().expect("Failed to execute command.");
+            print!("{}", String::from_utf8_lossy(&program.output().unwrap().stdout));
             break;
         }
     }
