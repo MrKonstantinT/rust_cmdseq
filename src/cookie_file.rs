@@ -10,7 +10,7 @@ pub struct CookieFile {
 
 impl CookieFile {
     pub fn new(directory: &str, command: &str) -> CookieFile {
-        let mut c_p = String::new();
+        let mut c_p = String::with_capacity(directory.len() + 24);
         let mut cookie = CookieFile { cookie_path: "Nil".to_string() };
         c_p = c_p + directory + "/cookie." + &cookie.get_hash_extention(command);
         cookie.cookie_path = c_p;

@@ -12,7 +12,7 @@ pub fn collect_between_white(string: &str, start_white: usize, end_white: usize)
     let mut collecting = if start_white < 1 { true } else { false };
     let mut ignoring_white = false;
     let mut count_white = 0;
-    let mut collection = String::new();
+    let mut collection = String::with_capacity(string.len()); // Benchmark new() against this.
     for c in string.chars() {
         if c == '"' {
             ignoring_white = !ignoring_white; // Do not allow spaces between quotes to affect the logic of this function.
