@@ -2,8 +2,7 @@ use std::error::Error;
 use std::process::Command;
 use std::io::prelude::*;
 use std::process::Stdio;
-use string_utils::*;
-use cmdseq::CmdSeq;
+use string_utils::{ build_command, collect_between_white };
 
 mod cmdseq;
 mod string_utils;
@@ -31,23 +30,6 @@ fn load_cookie(directory: &str, to_hash: &str) -> std::fs::File {
     file
 }
 
-fn get_command_list(command: &str) -> (Vec<CmdSeq>, usize) {
-    let mut command_list: Vec<CmdSeq> = Vec::new();
-    // The number of operations we would execute before we need to start from beginning.
-    let mut num_operations: usize = 0;
-    let mut num = 0;
-    while num <= count_white_space(command) { // Using 'while' loop as 'step_by()' has issues atm.
-        let t_b_n: usize = collect_between_white(command, num, num + 1).parse().expect("Usage: cmdseq [-d <count dir>] <count1> <cmd1> [... <countn> <cmdn>]");
-        num_operations += t_b_n;
-        command_list.push(CmdSeq::new(
-            t_b_n,
-            collect_between_white(command, num + 1, num + 2).replace("\"", ""),
-        ));
-        num = num + 2;
-    }
-    (command_list, num_operations)
-}
-
 fn main() {
     // Skip the first argument. It tells us the path to this executable.
     let passed_arguments = std::env::args().skip(1);
@@ -67,7 +49,7 @@ fn main() {
     file.read_to_string(&mut file_data).expect("Failed to read from our cookie.");
     file.seek(std::io::SeekFrom::End(-1 * file_data.len() as i64)).expect("Failed to make the file object read from the beginning.");
     let index: usize = file_data.trim_right().parse().expect("Something went wrong with parsing the cookie contents.");
-    let (cmd_list, number_of_operations) = get_command_list(&user_command);
+    let (cmd_list, number_of_operations) = cmdseq::get_command_list(&user_command);
     if index + 1 >= number_of_operations { // Perform 'wrap round':
         file.set_len(0).expect("Failed to shirnk file to size 0.");
         file.write(b"0\n").expect("Failed to update cookie.");
