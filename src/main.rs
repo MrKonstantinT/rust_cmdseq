@@ -3,13 +3,10 @@ use std::process::Command;
 use std::io::prelude::*;
 use std::process::Stdio;
 use string_utils::*;
+use cmdseq::CmdSeq;
 
+mod cmdseq;
 mod string_utils;
-
-struct CmdSeq {
-    times_before_next: usize,
-    cmd: String,
-}
 
 fn load_cookie(directory: &str, to_hash: &str) -> std::fs::File {
     // Select hash program here in the future.
@@ -42,10 +39,10 @@ fn get_command_list(command: &str) -> (Vec<CmdSeq>, usize) {
     while num <= count_white_space(command) { // Using 'while' loop as 'step_by()' has issues atm.
         let t_b_n: usize = collect_between_white(command, num, num + 1).parse().expect("Usage: cmdseq [-d <count dir>] <count1> <cmd1> [... <countn> <cmdn>]");
         num_operations += t_b_n;
-        command_list.push(CmdSeq {
-            times_before_next: t_b_n,
-            cmd: collect_between_white(command, num + 1, num + 2).replace("\"", ""),
-        });
+        command_list.push(CmdSeq::new(
+            t_b_n,
+            collect_between_white(command, num + 1, num + 2).replace("\"", ""),
+        ));
         num = num + 2;
     }
     (command_list, num_operations)
@@ -81,9 +78,9 @@ fn main() {
     };
     let mut accumulator: usize = 0;
     for cmdseq in cmd_list {
-        accumulator += cmdseq.times_before_next;
+        accumulator += cmdseq.get_times_before_next();
         if index < accumulator {
-            let mut word_iter = cmdseq.cmd.split_whitespace();
+            let mut word_iter = cmdseq.get_cmd().split_whitespace();
             let mut program = Command::new(match word_iter.next() {
                 Some(string) => string,
                 None => {
