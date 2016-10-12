@@ -4,11 +4,9 @@ use std::env;
 use getopts::Options;
 use std::process::Command;
 use cmdseq::CmdSeq;
-use string_utils::{build_command, collect_between_white};
 use cookie_file::CookieFile;
 
 mod cmdseq;
-mod string_utils;
 mod cookie_file;
 
 fn print_usage() {

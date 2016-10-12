@@ -1,6 +1,4 @@
 // Module cmdseq
-use string_utils::{collect_between_white, count_white_space};
-
 pub struct CmdSeq {
     times_before_next: usize,
     cmd: String,
